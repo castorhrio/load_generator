@@ -65,6 +65,7 @@ func NewTickets(total uint32) (Tickets, error) {
 	tick := tickets{}
 	if !tick.init(total) {
 		errMsg := fmt.Sprintf("The goroutine ticket pool can not be initialized! (total=%d)\n", total)
+		fmt.Println(errMsg)
 		return nil, errors.New(errMsg)
 	}
 	return &tick, nil

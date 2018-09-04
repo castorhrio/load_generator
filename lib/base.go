@@ -14,7 +14,7 @@ const (
 )
 
 const (
-	RET_CODE_SUCCESS              int = 0
+	RET_CODE_SUCCESS               = 0
 	RET_CODE_WARNING_CALL_TIMEOUT     = 1001
 	RET_CODE_ERROR_CALL               = 1002 //调用错误
 	RET_CODE_ERROR_RESPONSE           = 1003
@@ -51,4 +51,27 @@ type Generator interface {
 	Stop() bool
 	Status() uint32
 	CallCount() int64
+}
+
+
+// GetRetCodePlain 会依据结果代码返回相应的文字解释。
+func GetRetCodePlain(code int) string {
+	var codePlain string
+	switch code {
+	case RET_CODE_SUCCESS:
+		codePlain = "Success"
+	case RET_CODE_WARNING_CALL_TIMEOUT:
+		codePlain = "Call Timeout Warning"
+	case RET_CODE_ERROR_CALL:
+		codePlain = "Call Error"
+	case RET_CODE_ERROR_RESPONSE:
+		codePlain = "Response Error"
+	case RET_CODE_ERROR_CALLER:
+		codePlain = "Caller Error"
+	case RET_CODE_FATAL_CALL:
+		codePlain = "Call Fatal Error"
+	default:
+		codePlain = "Unknown result code"
+	}
+	return codePlain
 }

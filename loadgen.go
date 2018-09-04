@@ -30,7 +30,7 @@ func (ge *generator) init() error {
 	var buf bytes.Buffer
 	buf.WriteString("Initializing the load generator...")
 
-	//并发量=单个载荷的响应超时时间 / 载荷的发送间隔时间
+	//并发量=单个载荷的响应超时时间/载荷的发送间隔时间
 	//1e9代表1s对应的纳秒数
 	//+1表示最开始发送的那个载荷
 	var total = int64(ge.timeout)/int64(1e9/ge.lps) + 1
@@ -95,13 +95,14 @@ func (gen *generator) Start() bool {
 	go func() {
 		fmt.Println("Generating load...")
 		gen.genLoad(throttle)
-		fmt.Println("Stopped. (call count: %d)", gen.callCount)
+		fmt.Printf("Stopped. (call count: %d)", gen.callCount)
 	}()
 
 	return true
 }
 
 func (gen *generator) genLoad(throttle <-chan time.Time) {
+	fmt.Println("gen load")
 	for {
 		select {
 		case <-gen.ctx.Done():
@@ -130,6 +131,7 @@ func (gen *generator) prepareToStop(ctxError error) {
 }
 
 func (gen *generator) asynCall() {
+	fmt.Println("asyn call")
 	gen.tickets.Take()
 	go func() {
 		defer func() {
