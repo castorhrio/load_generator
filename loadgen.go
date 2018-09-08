@@ -47,6 +47,7 @@ func (ge *generator) init() error {
 
 	ge.tickets = tick
 	buf.WriteString(fmt.Sprintf("Done. (concurrency=%d)", ge.concurrency))
+	fmt.Println(buf.String())
 	return nil
 }
 
@@ -61,6 +62,7 @@ func NewGenerator(para Parameter) (lib.Generator, error) {
 		lps:        para.LPS,
 		duration:   para.Duration,
 		resultChan: para.ResultChan,
+		status:     lib.STATUS_ORIGINAL,
 	}
 
 	if err := gen.init(); err != nil {
@@ -70,7 +72,9 @@ func NewGenerator(para Parameter) (lib.Generator, error) {
 	return gen, nil
 }
 
+//启动载荷器
 func (gen *generator) Start() bool {
+	fmt.Println("Starting load generator....")
 	if !atomic.CompareAndSwapUint32(&gen.status, lib.STATUS_ORIGINAL, lib.STATUS_STARTING) {
 		if !atomic.CompareAndSwapUint32(&gen.status, lib.STATUS_STOPPED, lib.STATUS_STARTING) {
 			return false
@@ -82,6 +86,7 @@ func (gen *generator) Start() bool {
 	if gen.lps > 0 {
 		interval := time.Duration(1e9 / gen.lps)
 		throttle = time.Tick(interval)
+		fmt.Printf("Setting throttle(%v).../n", interval)
 	}
 
 	//初始化上下文和取消函数，让发生器能够在运行一段时间之后自己停下来
@@ -102,7 +107,6 @@ func (gen *generator) Start() bool {
 }
 
 func (gen *generator) genLoad(throttle <-chan time.Time) {
-	fmt.Println("gen load")
 	for {
 		select {
 		case <-gen.ctx.Done():
@@ -131,7 +135,6 @@ func (gen *generator) prepareToStop(ctxError error) {
 }
 
 func (gen *generator) asynCall() {
-	fmt.Println("asyn call")
 	gen.tickets.Take()
 	go func() {
 		defer func() {
@@ -141,8 +144,9 @@ func (gen *generator) asynCall() {
 				if ok {
 					errMsg = fmt.Sprintf("Async Call Panic! (error:%s)\n", err)
 				} else {
-					errMsg = fmt.Sprintf("Async Call Panic! (error:%#v)\n", p)
+					errMsg = fmt.Sprintf("Async Call Panic! (clue:%#v)\n", p)
 				}
+				fmt.Println(errMsg)
 				result := &lib.CallResult{
 					ID:   -1,
 					Code: lib.RET_CODE_FATAL_CALL,
@@ -226,6 +230,7 @@ func (gen *generator) callOne(rawReq *lib.RawReq) *lib.RawResp {
 	var rawResp lib.RawResp
 	if err != nil {
 		errMsg := fmt.Sprintf("Sync call error:%s", err)
+		fmt.Println(errMsg)
 		rawResp = lib.RawResp{
 			ID:     rawReq.ID,
 			Err:    errors.New(errMsg),

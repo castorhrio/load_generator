@@ -14,30 +14,21 @@ type Tickets interface {
 	Residue() uint32
 }
 
+//新建goroutine票池接口
+func NewTickets(total uint32) (Tickets, error) {
+	tick := tickets{}
+	if !tick.init(total) {
+		errMsg := fmt.Sprintf("The goroutine ticket pool can not be initialized! (total=%d)\n", total)
+		fmt.Println(errMsg)
+		return nil, errors.New(errMsg)
+	}
+	return &tick, nil
+}
+
 type tickets struct {
 	total      uint32
 	ticketChan chan struct{} //票池容器
 	active     bool          //票池是否被激活
-}
-
-func (tick *tickets) Take() {
-	<-tick.ticketChan
-}
-
-func (tick *tickets) Return() {
-	tick.ticketChan <- struct{}{}
-}
-
-func (tick *tickets) Active() bool {
-	return tick.active
-}
-
-func (tick *tickets) Total() uint32 {
-	return tick.total
-}
-
-func (tick *tickets) Residue() uint32 {
-	return uint32(len(tick.ticketChan))
 }
 
 func (tick *tickets) init(total uint32) bool {
@@ -61,12 +52,22 @@ func (tick *tickets) init(total uint32) bool {
 	return true
 }
 
-func NewTickets(total uint32) (Tickets, error) {
-	tick := tickets{}
-	if !tick.init(total) {
-		errMsg := fmt.Sprintf("The goroutine ticket pool can not be initialized! (total=%d)\n", total)
-		fmt.Println(errMsg)
-		return nil, errors.New(errMsg)
-	}
-	return &tick, nil
+func (tick *tickets) Take() {
+	<-tick.ticketChan
+}
+
+func (tick *tickets) Return() {
+	tick.ticketChan <- struct{}{}
+}
+
+func (tick *tickets) Active() bool {
+	return tick.active
+}
+
+func (tick *tickets) Total() uint32 {
+	return tick.total
+}
+
+func (tick *tickets) Residue() uint32 {
+	return uint32(len(tick.ticketChan))
 }

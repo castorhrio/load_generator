@@ -13,24 +13,15 @@ const (
 	STATUS_STOPPED  uint32 = 4 //已停止
 )
 
+//状态码
 const (
-	RET_CODE_SUCCESS               = 0
-	RET_CODE_WARNING_CALL_TIMEOUT     = 1001
-	RET_CODE_ERROR_CALL               = 1002 //调用错误
-	RET_CODE_ERROR_RESPONSE           = 1003
-	RET_CODE_ERROR_CALLER             = 1004 //调用方内部错误
-	RET_CODE_FATAL_CALL               = 1005
+	RET_CODE_SUCCESS              = 0
+	RET_CODE_WARNING_CALL_TIMEOUT = 1001 //调用超时警告
+	RET_CODE_ERROR_CALL           = 1002 //调用错误
+	RET_CODE_ERROR_RESPONSE       = 1003
+	RET_CODE_ERROR_CALLER         = 1004 //调用方内部错误
+	RET_CODE_FATAL_CALL           = 1005
 )
-
-//调用结果
-type CallResult struct {
-	ID     int64
-	Req    RawReq
-	Resp   RawResp
-	Code   int
-	Msg    string
-	Elapse time.Duration
-}
 
 //原生请求
 type RawReq struct {
@@ -46,13 +37,22 @@ type RawResp struct {
 	Elapse time.Duration
 }
 
+//调用结果
+type CallResult struct {
+	ID     int64
+	Req    RawReq
+	Resp   RawResp
+	Code   int
+	Msg    string
+	Elapse time.Duration
+}
+
 type Generator interface {
 	Start() bool
 	Stop() bool
 	Status() uint32
 	CallCount() int64
 }
-
 
 // GetRetCodePlain 会依据结果代码返回相应的文字解释。
 func GetRetCodePlain(code int) string {

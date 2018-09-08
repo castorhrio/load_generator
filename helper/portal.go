@@ -12,16 +12,19 @@ import (
 	"../lib"
 )
 
+//操作符
+var operators = []string{"+", "-", "*", "/"}
+
+//数据流分隔符
+const flag = '\n'
+
 type TCPCommunicator struct {
 	addr string
 }
 
-func NewTCPCommunicator(addr string) lib.Caller{
-	return &TCPCommunicator{addr:addr}
+func NewTCPCommunicator(addr string) lib.Caller {
+	return &TCPCommunicator{addr: addr}
 }
-
-//操作符
-var operators = []string{"+", "-", "*", "/"}
 
 //构建一个请求
 func (comm *TCPCommunicator) BuildReq() lib.RawReq {
@@ -50,12 +53,12 @@ func (comm *TCPCommunicator) Call(req []byte, timeout time.Duration) ([]byte, er
 		return nil, err
 	}
 
-	_, err = write(conn, req, '\n')
+	_, err = write(conn, req, flag)
 	if err != nil {
 		return nil, err
 	}
 
-	return read(conn, '\n')
+	return read(conn, flag)
 }
 
 func (comm *TCPCommunicator) CheckResp(req lib.RawReq, resp lib.RawResp) *lib.CallResult {
@@ -68,6 +71,7 @@ func (comm *TCPCommunicator) CheckResp(req lib.RawReq, resp lib.RawResp) *lib.Ca
 	if err != nil {
 		result.Code = lib.RET_CODE_FATAL_CALL
 		result.Msg = fmt.Sprintf("Incorrectly fromatted Request:%s!\n", string(req.Req))
+		fmt.Println(result.Msg)
 		return &result
 	}
 
@@ -76,35 +80,39 @@ func (comm *TCPCommunicator) CheckResp(req lib.RawReq, resp lib.RawResp) *lib.Ca
 	if err != nil {
 		result.Code = lib.RET_CODE_ERROR_RESPONSE
 		result.Msg = fmt.Sprintf("Incorrectly fromatted Response:%s!\n", string(resp.Resp))
+		fmt.Println(result.Msg)
 		return &result
 	}
 
 	if sresp.ID != sreq.ID {
 		result.Code = lib.RET_CODE_ERROR_RESPONSE
-		result.Msg = fmt.Sprintf("Incorrectly raw id (%d!=%d)!\n", req.ID,resp.ID)
+		result.Msg = fmt.Sprintf("Incorrectly raw id (%d!=%d)!\n", req.ID, resp.ID)
+		fmt.Println(result.Msg)
 		return &result
 	}
 
-	if sresp.Err!=nil{
+	if sresp.Err != nil {
 		result.Code = lib.RET_CODE_ERROR_CALLER
 		result.Msg = fmt.Sprintf("Abnormal server: %s!\n", sresp.Err)
+		fmt.Println(result.Msg)
 		return &result
 	}
 
 	if sresp.Result != op(sreq.Data, sreq.Operator) {
 		result.Code = lib.RET_CODE_ERROR_RESPONSE
 		result.Msg =
-			fmt.Sprintf("Incorrect result: %s!\n",genFormula(sreq.Data, sreq.Operator, sresp.Result, false))
+			fmt.Sprintf("Incorrect result: %s!\n", genFormula(sreq.Data, sreq.Operator, sresp.Result, false))
+		fmt.Println(result.Msg)
 		return &result
 	}
 
 	result.Code = lib.RET_CODE_SUCCESS
-	result.Msg = fmt.Sprintf("Success.(%s)",sresp.Formula)
+	result.Msg = fmt.Sprintf("Success.(%s)", sresp.Formula)
 	return &result
 }
 
 //从连接中读取数据直到遇到flag参数
-func read(conn net.Conn, flag byte) ([]byte, error) {
+func read(conn net.Conn, deline byte) ([]byte, error) {
 	readBytes := make([]byte, 1)
 	var buffer bytes.Buffer
 	for {
@@ -114,7 +122,7 @@ func read(conn net.Conn, flag byte) ([]byte, error) {
 		}
 
 		readByte := readBytes[0]
-		if readByte == flag {
+		if readByte == deline {
 			break
 		}
 		buffer.WriteByte(readByte)
@@ -123,11 +131,11 @@ func read(conn net.Conn, flag byte) ([]byte, error) {
 }
 
 //向链接中写数据，并在最后追加flag
-func write(conn net.Conn, content []byte, flag byte) (int, error) {
+func write(conn net.Conn, content []byte, deline byte) (int, error) {
 	write := bufio.NewWriter(conn)
 	n, err := write.Write(content)
-	if n == 0 {
-		write.WriteByte(flag)
+	if err == nil {
+		write.WriteByte(deline)
 	}
 
 	if err == nil {
