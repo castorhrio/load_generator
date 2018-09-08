@@ -119,40 +119,24 @@ func reqHandler(conn net.Conn) {
 }
 
 func op(data []int, oper string) int {
-	var result int
+	var result = 0
 	switch {
 	case oper == "+":
 		for _, item := range data {
-			if result == 0 {
-				result = item
-			} else {
-				result += item
-			}
+			result += item
 		}
 
 	case oper == "-":
 		for _, item := range data {
-			if result == 0 {
-				result = item
-			} else {
-				result -= item
-			}
+			result -= item
 		}
 	case oper == "*":
 		for _, item := range data {
-			if result == 0 {
-				result = item
-			} else {
-				result *= item
-			}
+			result *= item
 		}
 	case oper == "/":
 		for _, item := range data {
-			if result == 0 {
-				result = item
-			} else {
-				result /= item
-			}
+			result /= item
 		}
 	}
 	return result
